@@ -1,80 +1,53 @@
 # -*- coding: utf-8 -*-
 
-
+from fastapi import FastAPI
+from pydantic import BaseModel
 import pickle
-import streamlit as st
-from streamlit_option_menu import option_menu
+import json
 
 
-# loading the saved models
+app = FastAPI()
 
+class model_input(BaseModel):
+    
+    pregnancies : int
+    Glucose : int
+    BloodPressure : int
+    SkinThickness : int
+    Insulin : int
+    BMI : float
+    DiabetesPedigreeFunction : float
+    Age : int       
+        
+# loading the saved model
 diabetes_model = pickle.load(open('diabetes_model.sav', 'rb'))
 
-
-# sidebar for navigation
-with st.sidebar:
+@app.post('/diabetes_prediction')
+def diabetes_predd(input_parameters : model_input):
     
-    selected = option_menu('Sistem Prediksi Penyakit Diabetes',
-                          
-                          ['Diabetes Prediction',],
-                          icons=['activity',],
-                          default_index=0)
+    input_data = input_parameters.json()
+    input_dictionary = json.loads(input_data)
     
-    
-# Diabetes Prediction Page
-if (selected == 'Diabetes Prediction'):
-    
-    # page title
-    st.title('Prediksi Diabetes ')
+    preg = input_dictionary['pregnancies']
+    glu = input_dictionary['Glucose']
+    bp = input_dictionary['BloodPressure']
+    skin = input_dictionary['SkinThickness']
+    insulin = input_dictionary['Insulin']
+    bmi = input_dictionary['BMI']
+    dpf = input_dictionary['DiabetesPedigreeFunction']
+    age = input_dictionary['Age']
     
     
-    # getting the input data from the user
-    col1, col2, col3 = st.columns(3)
+    input_list = [preg, glu, bp, skin, insulin, bmi, dpf, age]
     
-    with col1:
-        Pregnancies = st.text_input('Number of Pregnancies')
-        
-    with col2:
-        Glucose = st.text_input('Glucose Level')
+    prediction = diabetes_model.predict([input_list])
     
-    with col3:
-        BloodPressure = st.text_input('Blood Pressure value')
-    
-    with col1:
-        SkinThickness = st.text_input('Skin Thickness value')
-    
-    with col2:
-        Insulin = st.text_input('Insulin Level')
-    
-    with col3:
-        BMI = st.text_input('BMI value')
-    
-    with col1:
-        DiabetesPedigreeFunction = st.text_input('Diabetes Pedigree Function value')
-    
-    with col2:
-        Age = st.text_input('Age of the Person')
+    if (prediction[0] == 0):
+        return 'The person is not diabetic'
+    else:
+        return 'The person is diabetic'
     
     
-    # code for Prediction
-    diab_diagnosis = ''
-    
-    # creating a button for Prediction
-    
-    if st.button('Hasil Tes Diabetes'):
-        diab_prediction = diabetes_model.predict([[Pregnancies, Glucose, BloodPressure, SkinThickness, Insulin, BMI, DiabetesPedigreeFunction, Age]])
-        
-        if (diab_prediction[0] == 1):
-          diab_diagnosis = 'The person is diabetic'
-        else:
-          diab_diagnosis = 'The person is not diabetic'
-        
-    st.success(diab_diagnosis)
-
-
-
-
-
 
 
 
